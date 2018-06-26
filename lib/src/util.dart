@@ -1,0 +1,1 @@
+StateError asyncOnly() => new StateError('`AssetFileSystem` only supports asynchronous operations.');
