@@ -13,9 +13,10 @@ class AssetDirectory extends Directory {
   @override
   final String path;
 
-  AssetDirectory(this.fileSystem, this.path);
+  final AssetId assetId;
 
-  AssetId get assetId => AssetId(fileSystem.package, path);
+  AssetDirectory(this.fileSystem, this.path, {AssetId assetId})
+      : this.assetId = assetId ?? AssetId(fileSystem.package, path);
 
   Context get context => fileSystem.path;
 

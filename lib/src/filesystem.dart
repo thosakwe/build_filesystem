@@ -52,17 +52,34 @@ class AssetFileSystem extends FileSystem {
   Future close() => Future.sync(() => _scratchSpace?.delete());
 
   String toPath(path) {
-    // TODO: Implement
+    if (path is String) {
+      return path;
+    } else if (path is AssetId) {
+      return toPath(path.path);
+    } else if (path is FileSystemEntity) {
+      return toPath(path.path);
+    } else if (path is Uri) {
+      if (!path.hasScheme) {
+        return toPath(path.path);
+      } else {
+        var id = AssetId.resolve(path.toString());
+        return toPath(id);
+      }
+    } else {
+      throw ArgumentError();
+    }
   }
+
+  AssetId _toAsset(path) => path is AssetId ? path : null;
 
   @override
   AssetDirectory directory(path) {
-    return AssetDirectory(this, toPath(path));
+    return AssetDirectory(this, toPath(path), assetId: _toAsset(path));
   }
 
   @override
   AssetFile file(path) {
-    return AssetFile(this, toPath(path));
+    return AssetFile(this, toPath(path), assetId: _toAsset(path));
   }
 
   @override

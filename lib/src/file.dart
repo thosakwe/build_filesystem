@@ -17,9 +17,10 @@ class AssetFile extends File {
   @override
   final String path;
 
-  AssetFile(this.fileSystem, this.path);
+  final AssetId assetId;
 
-  AssetId get assetId => AssetId(fileSystem.package, path);
+  AssetFile(this.fileSystem, this.path, {AssetId assetId})
+      : this.assetId = assetId ?? AssetId(fileSystem.package, path);
 
   Context get context => fileSystem.path;
 
