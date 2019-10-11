@@ -15,36 +15,39 @@ class AssetFileSystem extends FileSystem {
   final AssetReader reader;
   final AssetWriter writer;
 
-  Context _path = new Context(current: '');
+  Context _path = Context(current: '');
   ScratchSpace _scratchSpace;
 
   AssetFileSystem(this.package, this.reader, this.writer);
 
   factory AssetFileSystem.forBuildStep(BuildStep buildStep) {
     var asset = buildStep.inputId;
-    return new AssetFileSystem(asset.package, buildStep, buildStep)
+    return AssetFileSystem(asset.package, buildStep, buildStep)
       ..currentDirectory = dirname(asset.path);
   }
 
   Context get path => _path;
 
   @override
-  Directory get currentDirectory {}
+  Directory get currentDirectory => directory(path.current);
 
   @override
   set currentDirectory(dynamic path) {
     assert(path is String || path is Directory);
-    _path =
-        new Context(current: path is Directory ? path.path : path.toString());
+    _path = Context(current: path is Directory ? path.path : path.toString());
   }
 
-  ScratchSpace get scratchSpace => _scratchSpace ??= new ScratchSpace();
+  ScratchSpace get scratchSpace => _scratchSpace ??= ScratchSpace();
 
-  Future close() => new Future.sync(() => _scratchSpace?.delete());
+  Future close() => Future.sync(() => _scratchSpace?.delete());
+
+  String toPath(path) {
+    // TODO: Implement
+  }
 
   @override
   Directory directory(path) {
-    // TODO: implement directory
+    return AssetDirectory(this, toPath(path));
   }
 
   @override
@@ -54,7 +57,7 @@ class AssetFileSystem extends FileSystem {
 
   @override
   Future<bool> identical(String path1, String path2) =>
-      new Future<bool>.value(identicalSync(path1, path2));
+      Future<bool>.value(identicalSync(path1, path2));
 
   @override
   bool identicalSync(String path1, String path2) {
@@ -82,12 +85,12 @@ class AssetFileSystem extends FileSystem {
   Directory get systemTempDirectory => null;
 
   @override
-  Future<FileSystemEntityType> type(String path, {bool followLinks: true}) {
+  Future<FileSystemEntityType> type(String path, {bool followLinks = true}) {
     // TODO: implement type
   }
 
   @override
-  FileSystemEntityType typeSync(String path, {bool followLinks: true}) {
+  FileSystemEntityType typeSync(String path, {bool followLinks = true}) {
     throw asyncOnly();
   }
 }

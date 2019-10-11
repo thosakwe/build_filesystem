@@ -1,20 +1,35 @@
 import 'dart:async';
 import 'package:build/build.dart';
 import 'package:file/file.dart';
+import 'package:path/path.dart';
 import 'filesystem.dart';
+import 'util.dart';
 
 class AssetDirectory extends Directory {
-  // TODO: implement absolute
   @override
-  Directory get absolute => null;
+  final AssetFileSystem fileSystem;
 
-  // TODO: implement basename
   @override
-  String get basename => null;
+  final String path;
+
+  AssetDirectory(this.fileSystem, this.path);
+
+  Context get context => fileSystem.path;
+
+  @override
+  Directory get absolute => AssetDirectory(fileSystem, context.absolute(path));
+
+  @override
+  String get basename => context.basename(path);
+
+  @override
+  Uri get uri => context.toUri(path);
+
+  UnsupportedError _unsupported(String op) => unsupported('Directory', op);
 
   @override
   Directory childDirectory(String basename) {
-    // TODO: implement childDirectory
+    return AssetDirectory(fileSystem, context.join(path, basename));
   }
 
   @override
@@ -28,14 +43,14 @@ class AssetDirectory extends Directory {
   }
 
   @override
-  Future<Directory> create({bool recursive: false}) {
-    // TODO: implement create
+  Future<Directory> create({bool recursive = false}) {
+    // We can't create a directory in the context of a build, BUT
+    // we can potentially create files, so just return this directory.
+    return Future.value(this);
   }
 
   @override
-  void createSync({bool recursive: false}) {
-    // TODO: implement createSync
-  }
+  void createSync({bool recursive = false}) => throw asyncOnly();
 
   @override
   Future<Directory> createTemp([String prefix]) {
@@ -43,23 +58,17 @@ class AssetDirectory extends Directory {
   }
 
   @override
-  Directory createTempSync([String prefix]) {
-    // TODO: implement createTempSync
-  }
+  Directory createTempSync([String prefix]) => throw asyncOnly();
 
   @override
-  Future<FileSystemEntity> delete({bool recursive: false}) {
-    // TODO: implement delete
-  }
+  Future<FileSystemEntity> delete({bool recursive = false}) =>
+      throw _unsupported('delete');
 
   @override
-  void deleteSync({bool recursive: false}) {
-    // TODO: implement deleteSync
-  }
+  void deleteSync({bool recursive = false}) => throw asyncOnly();
 
-  // TODO: implement dirname
   @override
-  String get dirname => null;
+  String get dirname => context.dirname(path);
 
   @override
   Future<bool> exists() {
@@ -67,73 +76,45 @@ class AssetDirectory extends Directory {
   }
 
   @override
-  bool existsSync() {
-    // TODO: implement existsSync
-  }
-
-  // TODO: implement fileSystem
-  @override
-  FileSystem get fileSystem => null;
-
-  // TODO: implement isAbsolute
-  @override
-  bool get isAbsolute => null;
+  bool existsSync() => throw asyncOnly();
 
   @override
-  Stream<FileSystemEntity> list({bool recursive: false, bool followLinks: true}) {
+  bool get isAbsolute => context.isAbsolute(path);
+
+  @override
+  Stream<FileSystemEntity> list(
+      {bool recursive = false, bool followLinks = true}) {
     // TODO: implement list
   }
 
   @override
-  List<FileSystemEntity> listSync({bool recursive: false, bool followLinks: true}) {
-    // TODO: implement listSync
-  }
-
-  // TODO: implement parent
-  @override
-  Directory get parent => null;
-
-  // TODO: implement path
-  @override
-  String get path => null;
+  List<FileSystemEntity> listSync(
+          {bool recursive = false, bool followLinks = true}) =>
+      throw asyncOnly();
 
   @override
-  Future<Directory> rename(String newPath) {
-    // TODO: implement rename
-  }
+  Directory get parent => AssetDirectory(fileSystem, context.dirname(path));
 
   @override
-  Directory renameSync(String newPath) {
-    // TODO: implement renameSync
-  }
+  Future<Directory> rename(String newPath) => throw _unsupported('rename');
 
   @override
-  Future<String> resolveSymbolicLinks() {
-    // TODO: implement resolveSymbolicLinks
-  }
+  Directory renameSync(String newPath) => throw asyncOnly();
 
   @override
-  String resolveSymbolicLinksSync() {
-    // TODO: implement resolveSymbolicLinksSync
-  }
+  Future<String> resolveSymbolicLinks() => throw _unsupported('symbolic link');
 
   @override
-  Future<FileStat> stat() {
-    // TODO: implement stat
-  }
+  String resolveSymbolicLinksSync() => throw asyncOnly();
 
   @override
-  FileStat statSync() {
-    // TODO: implement statSync
-  }
-
-  // TODO: implement uri
-  @override
-  Uri get uri => null;
+  Future<FileStat> stat() => throw _unsupported('stat');
 
   @override
-  Stream<FileSystemEvent> watch({int events: FileSystemEvent.ALL, bool recursive: false}) {
-    // TODO: implement watch
-  }
+  FileStat statSync() => throw asyncOnly();
 
+  @override
+  Stream<FileSystemEvent> watch(
+          {int events = FileSystemEvent.all, bool recursive = false}) =>
+      throw _unsupported('watch');
 }
