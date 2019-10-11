@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:build/build.dart';
 import 'package:file/file.dart';
 import 'package:path/path.dart';
+import 'file.dart';
 import 'filesystem.dart';
 import 'util.dart';
 
@@ -14,6 +15,8 @@ class AssetDirectory extends Directory {
 
   AssetDirectory(this.fileSystem, this.path);
 
+  AssetId get assetId => AssetId(fileSystem.package, path);
+
   Context get context => fileSystem.path;
 
   @override
@@ -23,7 +26,7 @@ class AssetDirectory extends Directory {
   String get basename => context.basename(path);
 
   @override
-  Uri get uri => context.toUri(path);
+  Uri get uri => assetId.uri;
 
   UnsupportedError _unsupported(String op) => unsupported('Directory', op);
 
@@ -34,13 +37,11 @@ class AssetDirectory extends Directory {
 
   @override
   File childFile(String basename) {
-    // TODO: implement childFile
+    return AssetFile(fileSystem, context.join(path, basename));
   }
 
   @override
-  Link childLink(String basename) {
-    // TODO: implement childLink
-  }
+  Link childLink(String basename) => throw _unsupported('symbolic link');
 
   @override
   Future<Directory> create({bool recursive = false}) {
@@ -71,9 +72,7 @@ class AssetDirectory extends Directory {
   String get dirname => context.dirname(path);
 
   @override
-  Future<bool> exists() {
-    // TODO: implement exists
-  }
+  Future<bool> exists() => Future.value(true);
 
   @override
   bool existsSync() => throw asyncOnly();
@@ -108,7 +107,9 @@ class AssetDirectory extends Directory {
   String resolveSymbolicLinksSync() => throw asyncOnly();
 
   @override
-  Future<FileStat> stat() => throw _unsupported('stat');
+  Future<FileStat> stat() {
+    // TODO: Stat
+  }
 
   @override
   FileStat statSync() => throw asyncOnly();

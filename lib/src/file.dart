@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' as io;
 import 'package:build/build.dart';
@@ -18,6 +19,8 @@ class AssetFile extends File {
 
   AssetFile(this.fileSystem, this.path);
 
+  AssetId get assetId => AssetId(fileSystem.package, path);
+
   Context get context => fileSystem.path;
 
   @override
@@ -34,81 +37,69 @@ class AssetFile extends File {
     return null;
   }
 
+  File changeExtension(String newExtension) {
+    return AssetFile(fileSystem, context.setExtension(path, newExtension));
+  }
+
   @override
   File copySync(String newPath) => throw asyncOnly();
 
   @override
-  Future<File> create({bool recursive = false}) {
-    // TODO: implement create
-    return null;
-  }
+  Future<File> create({bool recursive = false}) => Future.value(this);
 
   @override
   void createSync({bool recursive = false}) => throw asyncOnly();
 
   @override
-  Future<FileSystemEntity> delete({bool recursive = false}) {
-    // TODO: implement delete
-    return null;
-  }
+  Future<FileSystemEntity> delete({bool recursive = false}) =>
+      throw _unsupported('deletion');
 
   @override
   void deleteSync({bool recursive = false}) => throw asyncOnly();
 
   @override
-  // TODO: implement dirname
-  String get dirname => null;
+  String get dirname => context.dirname(path);
 
   @override
-  Future<bool> exists() {
-    // TODO: implement exists
-    return null;
-  }
+  Future<bool> exists() => fileSystem.reader.canRead(assetId);
 
   @override
   bool existsSync() => throw asyncOnly();
 
   @override
-  // TODO: implement isAbsolute
-  bool get isAbsolute => null;
+  bool get isAbsolute => context.isAbsolute(path);
 
   @override
-  Future<DateTime> lastAccessed() {
-    // TODO: implement lastAccessed
-    return null;
-  }
+  Future<DateTime> lastAccessed() async => DateTime.now();
 
   @override
   DateTime lastAccessedSync() => throw asyncOnly();
 
   @override
-  Future<DateTime> lastModified() {
-    // TODO: implement lastModified
-    return null;
-  }
+  Future<DateTime> lastModified() async => DateTime.now();
 
   @override
   DateTime lastModifiedSync() => throw asyncOnly();
 
   @override
-  Future<int> length() {
-    // TODO: implement length
-    return null;
-  }
+  Future<int> length() => readAsBytes().then((buf) => buf.length);
 
   @override
   int lengthSync() => throw asyncOnly();
 
   @override
-  Future<RandomAccessFile> open({FileMode mode = FileMode.read}) {
-    // TODO: implement open
-    return null;
-  }
+  Future<RandomAccessFile> open({FileMode mode = FileMode.read}) =>
+      throw _unsupported('random access file');
 
   @override
   Stream<List<int>> openRead([int start, int end]) {
-    // TODO: implement openRead
-    return null;
+    var ctrl = StreamController<List<int>>();
+    readAsBytes().then((buf) {
+      start ??= 0;
+      end ??= buf.length;
+      ctrl.add(buf.getRange(start, end).toList());
+    }, onError: ctrl.addError).whenComplete(ctrl.close);
+    return ctrl.stream;
   }
 
   @override
@@ -122,68 +113,52 @@ class AssetFile extends File {
   }
 
   @override
-  // TODO: implement parent
-  Directory get parent => null;
+  Directory get parent => AssetDirectory(fileSystem, context.dirname(path));
 
   @override
-  Future<List<int>> readAsBytes() {
-    // TODO: implement readAsBytes
-    return null;
-  }
+  Future<List<int>> readAsBytes() => fileSystem.reader.readAsBytes(assetId);
 
   @override
   List<int> readAsBytesSync() => throw asyncOnly();
 
   @override
   Future<List<String>> readAsLines({Encoding encoding = utf8}) {
-    // TODO: implement readAsLines
-    return null;
+    return readAsString(encoding: encoding).then(LineSplitter().convert);
   }
 
   @override
   List<String> readAsLinesSync({Encoding encoding = utf8}) => throw asyncOnly();
 
   @override
-  Future<String> readAsString({Encoding encoding = utf8}) {
-    // TODO: implement readAsString
-    return null;
-  }
+  Future<String> readAsString({Encoding encoding = utf8}) =>
+      fileSystem.reader.readAsString(assetId, encoding: encoding);
 
   @override
   String readAsStringSync({Encoding encoding = utf8}) => throw asyncOnly();
 
   @override
   Future<File> rename(String newPath) {
-    // TODO: implement rename
-    return null;
+    // Since we can't delete files, return a copied version.
+    return copy(newPath);
   }
 
   @override
   File renameSync(String newPath) => throw asyncOnly();
 
   @override
-  Future<String> resolveSymbolicLinks() {
-    // TODO: implement resolveSymbolicLinks
-    return null;
-  }
+  Future<String> resolveSymbolicLinks() => throw _unsupported('symbolic link');
 
   @override
   String resolveSymbolicLinksSync() => throw asyncOnly();
 
   @override
-  Future setLastAccessed(DateTime time) {
-    // TODO: implement setLastAccessed
-    return null;
-  }
+  Future setLastAccessed(DateTime time) => Future.value();
 
   @override
   void setLastAccessedSync(DateTime time) => throw asyncOnly();
 
   @override
-  Future setLastModified(DateTime time) {
-    // TODO: implement setLastModified
-    return null;
-  }
+  Future setLastModified(DateTime time) => Future.value();
 
   @override
   void setLastModifiedSync(DateTime time) => throw asyncOnly();
@@ -198,21 +173,17 @@ class AssetFile extends File {
   FileStat statSync() => throw asyncOnly();
 
   @override
-  // TODO: implement uri
-  Uri get uri => null;
+  Uri get uri => assetId.uri;
 
   @override
   Stream<FileSystemEvent> watch(
-      {int events = FileSystemEvent.all, bool recursive = false}) {
-    // TODO: implement watch
-    return null;
-  }
+          {int events = FileSystemEvent.all, bool recursive = false}) =>
+      throw _unsupported('watch');
 
   @override
   Future<File> writeAsBytes(List<int> bytes,
       {FileMode mode = io.FileMode.write, bool flush = false}) {
-    // TODO: implement writeAsBytes
-    return null;
+    return fileSystem.writer.writeAsBytes(assetId, bytes).then((_) => this);
   }
 
   @override
@@ -225,8 +196,9 @@ class AssetFile extends File {
       {FileMode mode = io.FileMode.write,
       Encoding encoding = utf8,
       bool flush = false}) {
-    // TODO: implement writeAsString
-    return null;
+    return fileSystem.writer
+        .writeAsString(assetId, contents, encoding: encoding)
+        .then((_) => this);
   }
 
   @override
